@@ -11,27 +11,30 @@ const PER_PAGE = 9;
 
 const EventList = () => {
   const { data, error } = useData();
-  const [type, setType] = useState();
+  const [type, setType] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const filteredEvents = (
-    (!type
-      ? data?.events
-      : data?.events) || []
-  ).filter((event, index) => {
-    if (
-      (currentPage - 1) * PER_PAGE <= index &&
-      PER_PAGE * currentPage > index
-    ) {
-      return true;
-    }
-    return false;
-  });
-  const changeType = (evtType) => {
+  const filteredEvents = (data?.events || [])
+    .filter((event) => {
+      const eventType = event.type.toLowerCase().trim();
+      const selectedType = type ? type.toLowerCase().trim() : null;
+      const matchesType = !selectedType || eventType === selectedType;
+      return matchesType;
+    })
+    .filter((_, index) => {
+      const inPageRange =
+        (currentPage - 1) * PER_PAGE <= index && PER_PAGE * currentPage > index;
+
+      return inPageRange;
+    });
+
+  const changeType = (value) => {
     setCurrentPage(1);
-    setType(evtType);
+    setType(value);
   };
+
   const pageNumber = Math.floor((filteredEvents?.length || 0) / PER_PAGE) + 1;
   const typeList = new Set(data?.events.map((event) => event.type));
+
   return (
     <>
       {error && <div>An error occured</div>}
@@ -40,10 +43,7 @@ const EventList = () => {
       ) : (
         <>
           <h3 className="SelectTitle">Catégories</h3>
-          <Select
-            selection={Array.from(typeList)}
-            onChange={(value) => (value ? changeType(value) : changeType(null))}
-          />
+          <Select selection={Array.from(typeList)} onChange={changeType} />
           <div id="events" className="ListContainer">
             {filteredEvents.map((event) => (
               <Modal key={event.id} Content={<ModalEvent event={event} />}>
